@@ -1,0 +1,21 @@
+// for syntax highlighting we use proto3 version
+syntax="proto3";
+
+// package name for our proto file
+package calculator;
+
+// path to our current folder, where the generated files will be placed
+option go_package = "./proto/calculator";
+
+message SumRequest {
+    int64 First = 1;
+    int64 Second = 2;
+};
+message SumResponse{
+    int64 SumResult = 1;
+};
+
+// defining all the Services for the gRPC
+service CalculatorService {
+    rpc Calculator(SumRequest) returns (SumResponse) {};
+}
