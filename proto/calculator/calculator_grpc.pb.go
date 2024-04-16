@@ -25,6 +25,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	CalculatorService_Calculator_FullMethodName               = "/calculator.CalculatorService/Calculator"
 	CalculatorService_PrimeNumberDecomposition_FullMethodName = "/calculator.CalculatorService/PrimeNumberDecomposition"
+	CalculatorService_SumOfTheArrayElements_FullMethodName    = "/calculator.CalculatorService/SumOfTheArrayElements"
 )
 
 // CalculatorServiceClient is the client API for CalculatorService service.
@@ -35,6 +36,8 @@ type CalculatorServiceClient interface {
 	Calculator(ctx context.Context, in *SumRequest, opts ...grpc.CallOption) (*SumResponse, error)
 	// Server Streaming...
 	PrimeNumberDecomposition(ctx context.Context, in *PrimeDecompositionRequest, opts ...grpc.CallOption) (CalculatorService_PrimeNumberDecompositionClient, error)
+	// Client Streaming...
+	SumOfTheArrayElements(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_SumOfTheArrayElementsClient, error)
 }
 
 type calculatorServiceClient struct {
@@ -86,6 +89,40 @@ func (x *calculatorServicePrimeNumberDecompositionClient) Recv() (*PrimeDecompos
 	return m, nil
 }
 
+func (c *calculatorServiceClient) SumOfTheArrayElements(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_SumOfTheArrayElementsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CalculatorService_ServiceDesc.Streams[1], CalculatorService_SumOfTheArrayElements_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calculatorServiceSumOfTheArrayElementsClient{stream}
+	return x, nil
+}
+
+type CalculatorService_SumOfTheArrayElementsClient interface {
+	Send(*SumOfTheArrayElementsRequest) error
+	CloseAndRecv() (*SumOfTheArrayElementsResponse, error)
+	grpc.ClientStream
+}
+
+type calculatorServiceSumOfTheArrayElementsClient struct {
+	grpc.ClientStream
+}
+
+func (x *calculatorServiceSumOfTheArrayElementsClient) Send(m *SumOfTheArrayElementsRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *calculatorServiceSumOfTheArrayElementsClient) CloseAndRecv() (*SumOfTheArrayElementsResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(SumOfTheArrayElementsResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalculatorServiceServer is the server API for CalculatorService service.
 // All implementations must embed UnimplementedCalculatorServiceServer
 // for forward compatibility
@@ -94,6 +131,8 @@ type CalculatorServiceServer interface {
 	Calculator(context.Context, *SumRequest) (*SumResponse, error)
 	// Server Streaming...
 	PrimeNumberDecomposition(*PrimeDecompositionRequest, CalculatorService_PrimeNumberDecompositionServer) error
+	// Client Streaming...
+	SumOfTheArrayElements(CalculatorService_SumOfTheArrayElementsServer) error
 	mustEmbedUnimplementedCalculatorServiceServer()
 }
 
@@ -106,6 +145,9 @@ func (UnimplementedCalculatorServiceServer) Calculator(context.Context, *SumRequ
 }
 func (UnimplementedCalculatorServiceServer) PrimeNumberDecomposition(*PrimeDecompositionRequest, CalculatorService_PrimeNumberDecompositionServer) error {
 	return status.Errorf(codes.Unimplemented, "method PrimeNumberDecomposition not implemented")
+}
+func (UnimplementedCalculatorServiceServer) SumOfTheArrayElements(CalculatorService_SumOfTheArrayElementsServer) error {
+	return status.Errorf(codes.Unimplemented, "method SumOfTheArrayElements not implemented")
 }
 func (UnimplementedCalculatorServiceServer) mustEmbedUnimplementedCalculatorServiceServer() {}
 
@@ -159,6 +201,32 @@ func (x *calculatorServicePrimeNumberDecompositionServer) Send(m *PrimeDecomposi
 	return x.ServerStream.SendMsg(m)
 }
 
+func _CalculatorService_SumOfTheArrayElements_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CalculatorServiceServer).SumOfTheArrayElements(&calculatorServiceSumOfTheArrayElementsServer{stream})
+}
+
+type CalculatorService_SumOfTheArrayElementsServer interface {
+	SendAndClose(*SumOfTheArrayElementsResponse) error
+	Recv() (*SumOfTheArrayElementsRequest, error)
+	grpc.ServerStream
+}
+
+type calculatorServiceSumOfTheArrayElementsServer struct {
+	grpc.ServerStream
+}
+
+func (x *calculatorServiceSumOfTheArrayElementsServer) SendAndClose(m *SumOfTheArrayElementsResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *calculatorServiceSumOfTheArrayElementsServer) Recv() (*SumOfTheArrayElementsRequest, error) {
+	m := new(SumOfTheArrayElementsRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalculatorService_ServiceDesc is the grpc.ServiceDesc for CalculatorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +244,11 @@ var CalculatorService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "PrimeNumberDecomposition",
 			Handler:       _CalculatorService_PrimeNumberDecomposition_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "SumOfTheArrayElements",
+			Handler:       _CalculatorService_SumOfTheArrayElements_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "calculator/calculator.proto",

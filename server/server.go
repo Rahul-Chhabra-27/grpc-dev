@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -26,6 +27,7 @@ func (*Config) Calculator(ctx context.Context, request *calculatorProto.SumReque
 		SumResult: firstNumber + secondNumber,
 	}, nil
 }
+// Server Streaming..
 func (*Config) PrimeNumberDecomposition(request *calculatorProto.PrimeDecompositionRequest, stream calculatorProto.CalculatorService_PrimeNumberDecompositionServer) error {
 	fmt.Println("Server Streaming Started...")
 	var factor int64 = 2
@@ -44,6 +46,32 @@ func (*Config) PrimeNumberDecomposition(request *calculatorProto.PrimeDecomposit
 		}
 	}
 	return nil
+}
+// Client Streaming..
+func (*Config) SumOfTheArrayElements(stream calculatorProto.CalculatorService_SumOfTheArrayElementsServer) error {
+	sumResult := int64(0)
+	// recieving the stream...
+	for {
+		// recieving the chunk of stream..
+		chunk, err := stream.Recv()
+
+		// stream completd...
+		if err == io.EOF {
+			response := &calculatorProto.SumOfTheArrayElementsResponse{
+				Sumofallelements: int64(sumResult),
+			}
+			// sending the response and closing the stream..
+			return stream.SendAndClose(response);
+
+		} else if err != nil {
+			//some error occured...
+			log.Fatalf("Error while Reading client streaming %v\n",err)
+
+		} else {
+			// add the element coming from stream to the sumResult variable.
+			sumResult += int64(chunk.Element);
+		} 
+	}
 }
 func main() {
 	// listen on the port

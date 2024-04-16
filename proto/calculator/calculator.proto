@@ -21,11 +21,21 @@ message PrimeDecompositionRequest {
 message PrimeDecompositionResponse {
     int64 primeFactor = 1;
 };
+message SumOfTheArrayElementsRequest {
+    int64 element = 1;
+}
+message SumOfTheArrayElementsResponse {
+    int64 sumofallelements = 1;
+}
 // defining all the Services for the gRPC
 service CalculatorService {
     // Unary RPC..
     rpc Calculator(SumRequest) returns (SumResponse) {};
     
-    // Server Streaming...
+    // Server Streaming...  
     rpc PrimeNumberDecomposition(PrimeDecompositionRequest) returns (stream PrimeDecompositionResponse){};
+
+    // Client Streaming...
+    rpc SumOfTheArrayElements(stream SumOfTheArrayElementsRequest) returns (SumOfTheArrayElementsResponse){};
 }
+

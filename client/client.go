@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -55,6 +56,46 @@ func ServerStreamingRPC(client calculatorProto.CalculatorServiceClient) {
 		}
 	}
 }
+func ClientStreamingRPC(client calculatorProto.CalculatorServiceClient) {
+
+	// request slice
+	requests := []*calculatorProto.SumOfTheArrayElementsRequest{
+		&calculatorProto.SumOfTheArrayElementsRequest{
+			Element: 1,
+		},
+		&calculatorProto.SumOfTheArrayElementsRequest{
+			Element: 2,
+		},
+		&calculatorProto.SumOfTheArrayElementsRequest{
+			Element: 3,
+		},
+		&calculatorProto.SumOfTheArrayElementsRequest{
+			Element: 4,
+		},
+		&calculatorProto.SumOfTheArrayElementsRequest{
+			Element: 5,
+		},
+	}
+
+	// calling the sumofTheArrayElements RPC.
+	stream, err := client.SumOfTheArrayElements(context.Background())
+	if err != nil {
+		log.Fatalf("Error while calling SumOfTheArrayElements RPC.. %v", err)
+	}
+
+	for _, request := range requests {
+		fmt.Printf("Sending request %v \n", request)
+		stream.Send(request)
+		// waiting for one second to see the stream in the o/p console one by one..
+		time.Sleep(time.Second)
+	}
+
+	response, err := stream.CloseAndRecv();
+	if err != nil {
+		log.Fatalf("Error while recieving the response .. %v", err)
+	}
+	fmt.Printf("Response : %v\n", response.Sumofallelements)
+}
 func main() {
 
 	connection, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -64,8 +105,11 @@ func main() {
 	defer connection.Close()
 
 	grpcClient := calculatorProto.NewCalculatorServiceClient(connection)
-	// unary function ...
-//	unaryRPC(grpcClient)
+	//1. unary function ...
+	//	unaryRPC(grpcClient)
+	//2. server streaming function..
+	//ServerStreamingRPC(grpcClient)
 
-	ServerStreamingRPC(grpcClient);
+	// 3. client streaing function.
+	ClientStreamingRPC(grpcClient)
 }
