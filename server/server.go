@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 
@@ -13,17 +14,36 @@ type Config struct {
 	calculatorProto.UnimplementedCalculatorServiceServer
 }
 
-//  Unary RPC function
+// Unary RPC function
 func (*Config) Calculator(ctx context.Context, request *calculatorProto.SumRequest) (response *calculatorProto.SumResponse, err error) {
 	// getting the first number from the request body.
-	firstNumber := request.First;
+	firstNumber := request.First
 	// getting the second number from the request body.
 	secondNumber := request.Second
 
 	// returning the SumResponse ;
 	return &calculatorProto.SumResponse{
 		SumResult: firstNumber + secondNumber,
-	}, nil;
+	}, nil
+}
+func (*Config) PrimeNumberDecomposition(request *calculatorProto.PrimeDecompositionRequest, stream calculatorProto.CalculatorService_PrimeNumberDecompositionServer) error {
+	fmt.Println("Server Streaming Started...")
+	var factor int64 = 2
+	var number int64 = request.PrimeNumber
+	for {
+		if number <= 1 {
+			break
+		} else if number%factor == 0 {
+			stream.Send(&calculatorProto.PrimeDecompositionResponse{
+				PrimeFactor: factor,
+			})
+			number /= factor
+		} else {
+			fmt.Println("Factor is incremented by one++ ")
+			factor++
+		}
+	}
+	return nil
 }
 func main() {
 	// listen on the port

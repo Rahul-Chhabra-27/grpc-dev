@@ -10,3 +10,6 @@ grpc-server:
 
 grpc-client:
 		go run client/client.go
+
+path-variable:
+	 export PATH="$PATH:$(go env GOPATH)/bin";   
