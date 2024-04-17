@@ -12,6 +12,7 @@ import (
 	calculatorProto "rahulchhabra.io/proto/calculator"
 )
 
+// Unary RPC function for the client..
 func unaryRPC(grpcClient calculatorProto.CalculatorServiceClient) {
 	fmt.Println("Calling the Calculator RPC")
 	request := &calculatorProto.SumRequest{
@@ -56,6 +57,7 @@ func ServerStreamingRPC(client calculatorProto.CalculatorServiceClient) {
 		}
 	}
 }
+// Client Streaming RPC function for the client..
 func ClientStreamingRPC(client calculatorProto.CalculatorServiceClient) {
 
 	// request slice
@@ -96,6 +98,60 @@ func ClientStreamingRPC(client calculatorProto.CalculatorServiceClient) {
 	}
 	fmt.Printf("Response : %v\n", response.Sumofallelements)
 }
+func BiDirectionalStreamingRPC(client calculatorProto.CalculatorServiceClient) {
+	fmt.Println("Starting to do a BiDirectional streaming..")
+	// request slice
+	requests := []*calculatorProto.FindMaximumRequest{
+		&calculatorProto.FindMaximumRequest{
+			Number: 1,
+		},
+		&calculatorProto.FindMaximumRequest{
+			Number: 5,
+		},
+		&calculatorProto.FindMaximumRequest{
+			Number: 3,
+		},
+		&calculatorProto.FindMaximumRequest{
+			Number: 6,
+		},
+		&calculatorProto.FindMaximumRequest{
+			Number: 2,
+		},
+	}
+	stream, err := client.FindMaximum(context.Background());
+	if err != nil {
+		log.Fatalf("Error while calling FindMaximum RPC %v", err)
+	}
+
+	// channel to wait for the goroutine to complete..
+	watch := make(chan struct{})
+	// goroutine to send the stream..
+	go func () {
+		for _, request := range requests {
+			fmt.Printf("Sending request %v\n", request)
+			stream.Send(request)
+			time.Sleep(time.Millisecond * 1000)
+		}
+		// closing the stream after sending all the requests..
+		stream.CloseSend()
+	}()
+	// goroutine to recieve the stream..
+	go func () {
+		for {
+			response, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error while recieving the stream %v\n", err)
+				break
+			}
+			fmt.Printf("Recieved : %v\n", response.Maximum)
+		}
+		close(watch)
+	}()
+		<-watch
+}
 func main() {
 
 	connection, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -111,5 +167,8 @@ func main() {
 	//ServerStreamingRPC(grpcClient)
 
 	// 3. client streaing function.
-	ClientStreamingRPC(grpcClient)
+	//ClientStreamingRPC(grpcClient)
+
+	// 4. Bi-Directional streaming function.
+	BiDirectionalStreamingRPC(grpcClient)
 }

@@ -73,6 +73,39 @@ func (*Config) SumOfTheArrayElements(stream calculatorProto.CalculatorService_Su
 		} 
 	}
 }
+// Bi-Directional Streaming..
+
+// FindMaximum function will find the maximum number from the stream of numbers.
+// and send the maximum number to the client.
+func (*Config) FindMaximum(stream calculatorProto.CalculatorService_FindMaximumServer) error {
+	fmt.Println("FindMaximum function was invoked with a streaming request..")
+	maximum := int64(0)
+	for {
+		// recieving the chunk of stream.
+		chunk, err := stream.Recv()
+		// stream completed...
+		if err == io.EOF {
+			return nil
+		} else if err != nil {
+			log.Fatalf("Error while reading the client stream %v\n",err)
+			return err
+		} else {
+			number := chunk.Number
+			if number > maximum {
+				maximum = number
+				// sending the maximum number to the client.
+				sendingError := stream.Send(&calculatorProto.FindMaximumResponse{
+					Maximum: maximum,
+				})
+
+				if sendingError != nil {
+					log.Fatalf("Error while sending the maximum number to the client %v\n",sendingError)
+					return sendingError
+				}
+			}
+		}
+	}
+}
 func main() {
 	// listen on the port
 	listner, err := net.Listen("tcp", "localhost:50051")

@@ -27,6 +27,13 @@ message SumOfTheArrayElementsRequest {
 message SumOfTheArrayElementsResponse {
     int64 sumofallelements = 1;
 }
+message FindMaximumRequest {
+    int64 number = 1;
+}   
+message FindMaximumResponse {
+    int64 maximum = 1;
+}
+
 // defining all the Services for the gRPC
 service CalculatorService {
     // Unary RPC..
@@ -37,5 +44,8 @@ service CalculatorService {
 
     // Client Streaming...
     rpc SumOfTheArrayElements(stream SumOfTheArrayElementsRequest) returns (SumOfTheArrayElementsResponse){};
+
+    // Bi-Directional Streaming...
+    rpc FindMaximum(stream FindMaximumRequest) returns (stream FindMaximumResponse){};
 }
 
